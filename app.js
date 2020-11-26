@@ -1,4 +1,6 @@
 const { App } = require('@slack/bolt');
+const appHome = require('./appHome');
+const message = require('./message');
 
 // Initializes your app with your bot token and signing secret
 const app = new App({
@@ -18,3 +20,79 @@ app.message('hello', async ({ message, say }) => {
 
   console.log('⚡️ Bolt app is running!');
 })();
+
+
+//Open the App home
+app.event('app_home_opened', async ({ event, context, payload }) => {
+  // Display App Home
+  const homeView = await appHome.createHome(event.user);
+  
+  try {
+    const result = await app.client.views.publish({
+      token: context.botToken,
+      user_id: event.user,
+      view: homeView
+    });
+    
+  } catch(e) {
+    app.error(e);
+  }
+  
+});
+
+// Receive button actions from App Home UI "Add a Stickie"
+app.action('add_note', async ({ body, context, ack }) => {
+  ack();
+  
+  // Open a modal window with forms to be submitted by a user
+  const view = appHome.openModal();
+  
+  try {
+    const result = await app.client.views.open({
+      token: context.botToken,
+      trigger_id: body.trigger_id,
+      view: view
+    });
+    
+  } catch(e) {
+    console.log(e);
+    app.error(e);
+  }
+});
+
+// Receive view_submissions
+app.view('modal_view', async ({ ack, body, context, view }) => {
+  ack();
+  
+  const ts = new Date();
+  
+  const data = {
+    timestamp: ts.toLocaleString(),
+    note: view.state.values.note01.content.value,
+    color: view.state.values.note02.color.selected_option.value
+  }
+
+  const homeView = await appHome.createHome(body.user.id, data);
+
+  try {
+    const result = await app.client.apiCall('views.publish', {
+      token: context.botToken,
+      user_id: body.user.id,
+      view: homeView
+    });
+
+  } catch(e) {
+    console.log(e);
+    app.error(e);
+  }
+    
+});
+
+(async () => {
+  // Start your app
+  await app.start(process.env.PORT || 3000);
+
+  console.log('⚡️ Bolt app is running!');
+})();
+
+module.exports = { app };
