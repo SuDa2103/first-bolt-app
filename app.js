@@ -12,6 +12,35 @@ app.message('hello', async ({ message, say }) => {
   await say(`Hey there <@${message.user}>!`);
 });
 
+// When "/schedule", schedule a message for tomorrow morning
+// Tip: use the shortcut() method to listen to shortcut events
+app.command("/schedule", async ({ command, ack, client }) => {
+  // Acknowledge incoming command event
+  ack();
+
+  // Unix timestamp for tomorrow morning at 9AM
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(9, 0, 0);
+
+  try {
+    // Call the chat.scheduleMessage method using the built-in WebClient
+    // The client uses the token you used to initialize the app
+    const result = await client.chat.scheduleMessage({
+      channel: "general",
+      text: command.text,
+      // Time to post message, in Unix Epoch timestamp format
+      post_at: tomorrow.getTime() / 1000
+    });
+
+    // Print result
+    console.log(result);
+  }
+  catch (error) {
+    console.error(error);
+  }
+});
+
 (async () => {
   // Start your app
   await app.start(process.env.PORT || 3000);
