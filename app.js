@@ -28,7 +28,7 @@ app.command("/schedule", async ({ command, ack, client }) => {
     // The client uses the token you used to initialize the app
     const result = await client.chat.scheduleMessage({
       channel: "general",
-      text: command.text,
+      text: "This is a scheduled message",
       // Time to post message, in Unix Epoch timestamp format
       post_at: tomorrow.getTime() / 1000
     });
